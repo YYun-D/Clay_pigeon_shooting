@@ -5,16 +5,18 @@ import target from "./assets/claypigeon.png";
 import shootsound from "./assets/gun-sound.mp3";
 import bullet from "./assets/bullet.png";
 
+let point = 0;
+
 class MainScene extends Phaser.Scene {
     constructor () {
         super("startGame");
     }
     preload ()
     {        
-        this.load.image("background1", bgImg1);
+        this.load.image("background", bgImg1);
     }
     create() {
-        this.add.image(0, 0, "background1").setOrigin(0, 0);
+        this.add.image(0, 0, "background").setOrigin(0, 0);
         this.add.text(230, 200, "Clay pigeon shooting", {fontSize: "50px",backgroundColor: "#000"})
         this.add.text(470, 500, "Start", {fontSize: "40px",backgroundColor: "#000"})
         .setInteractive()
@@ -32,7 +34,7 @@ class MyGame extends Phaser.Scene
 
     preload ()
     {        
-        this.load.image("background1", bgImg1);
+        this.load.image("background", bgImg1);
         this.load.image("aimImg", aimImg);
         this.load.image("target", target);
         this.load.audio('clickSound', shootsound);
@@ -55,9 +57,9 @@ class MyGame extends Phaser.Scene
             repeat: 2
         });
 
-        this.point = 0;
-        this.background1 = this.add.image(0, 0, "background1");
-        this.background1.setOrigin(0, 0);
+        point = 0;
+        this.background = this.add.image(0, 0, "background");
+        this.background.setOrigin(0, 0);
 
         this.aimImg = this.add.image(0, 0, "aimImg");
         this.aimImg.setOrigin(0, 0);
@@ -72,8 +74,13 @@ class MyGame extends Phaser.Scene
             self.target.setInteractive();
             self.target.on('pointerdown', function () {
                 self.target.setVisible(false);
+                point += 1;
+                self.pointviewtext.text = point;
             });
 
+            self.pointview = self.add.image(50, 50, "target");
+            self.pointview.setScale(0.2);
+            self.pointviewtext = self.add.text(100, 30, "0", { fontSize: "40px", backgroundColor: "#000" });
             self.bullet = self.add.image(850, 50, "bullet");
             self.bullet.setScale(0.2);
             self.add.text(880, 30, "X", { fontSize: "40px", backgroundColor: "#000" });
@@ -87,6 +94,9 @@ class MyGame extends Phaser.Scene
                     self.clickSound.play();
                     self.bulletcount--;
                     self.bullettext.text = self.bulletcount;
+                }
+                else {
+                    this.scene.start("EndGame")
                 }
             });
     
@@ -102,6 +112,23 @@ class MyGame extends Phaser.Scene
 
 }
 
+class EndGame extends Phaser.Scene {
+    constructor () {
+        super("EndGame");
+    }
+    preload ()
+    {        
+        this.load.image("background", bgImg1);
+    }
+    create() {
+        this.add.image(0, 0, "background").setOrigin(0, 0);
+        this.add.text(500, 200, point, {fontSize: "80px",backgroundColor: "#000"})
+        this.add.text(380, 400, "Retry?", {fontSize: "80px",backgroundColor: "#000"})
+        .setInteractive()
+        .on(Phaser.Input.Events.GAMEOBJECT_POINTER_DOWN, () => this.scene.start("playGame"))
+    }
+}
+
 const config = {
     type: Phaser.AUTO,
     parent: 'phaser-example',
@@ -115,7 +142,7 @@ const config = {
             debug: process.env.DEBUG === "true",
         },
     },
-    scene: [MainScene, MyGame]
+    scene: [MainScene, MyGame, EndGame]
 };
 
 const game = new Phaser.Game(config);
