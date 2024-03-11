@@ -6,6 +6,8 @@ import shootsound from "./assets/gun-sound.mp3";
 import bullet from "./assets/bullet.png";
 
 let point = 0;
+let sizing;
+let targetremake;
 
 class MainScene extends Phaser.Scene {
     constructor () {
@@ -44,6 +46,7 @@ class MyGame extends Phaser.Scene
     create ()
     {   
         const text = this.add.text(500, 400, '3', { fontSize: '100px',backgroundColor: "#000"});
+        this.gravity = 0.5;
         text.setDepth(1000);
         this.time.delayedCall(3000, startGame, [], this);
         let count = 2;
@@ -68,16 +71,30 @@ class MyGame extends Phaser.Scene
 
         function startGame() {
             let self = this;
-
-            self.target = self.add.image(100, 500, "target");
-            self.target.setScale(0.2);
+            self.setx = [0,1024];
+            self.setxindex = Math.random() < 0.5 ? 0 : 1;
+            self.target = self.add.image(self.setx[self.setxindex], Math.floor(Math.random() * (800 - 200 + 1)) + 200, "target");
+            self.target.setScale(0.4);
             self.target.setInteractive();
+            targetremake = () => {
+                self.setxindex = Math.random() < 0.5 ? 0 : 1;
+                self.target.x = self.setx[self.setxindex];
+                self.target.y = Math.floor(Math.random() * (800 - 200 + 1)) + 200;
+            }
+
+            sizing = self.tweens.add({
+                targets     : [ self.target ],
+                scale: 0,
+                ease        : 'Linear',
+                duration    : 2000,
+            });
             self.target.on('pointerdown', function () {
-                self.target.setVisible(false);
+                targetremake();
                 point += 1;
                 self.pointviewtext.text = point;
+                self.gravity = 0.5;
+                sizing.restart();
             });
-
             self.pointview = self.add.image(50, 50, "target");
             self.pointview.setScale(0.2);
             self.pointviewtext = self.add.text(100, 30, "0", { fontSize: "40px", backgroundColor: "#000" });
@@ -90,7 +107,7 @@ class MyGame extends Phaser.Scene
             self.clickSound = self.sound.add('clickSound');
 
             self.input.on('pointerdown', () => {
-                if (self.bulletcount > 0) {
+                if (self.bulletcount > 1) {
                     self.clickSound.play();
                     self.bulletcount--;
                     self.bullettext.text = self.bulletcount;
@@ -106,8 +123,24 @@ class MyGame extends Phaser.Scene
     
 
     update(){
-        this.aimImg.x=this.input.mousePointer.x-40
-        this.aimImg.y=this.input.mousePointer.y-40
+        this.aimImg.x=this.input.mousePointer.x-40;
+        this.aimImg.y=this.input.mousePointer.y-40;
+        if (this.target) {
+            if (this.setxindex==0) this.target.x += 10;
+            else this.target.x -= 10;
+            this.target.y += this.gravity;
+            this.gravity *= 1.03;
+            this.target.y -= 5;
+            if (this.target.scale==0 || this.target.scale==0.4) {
+                sizing.restart();
+                this.gravity = 0.5;
+            }
+            if (this.target.x<0 || this.target.x>1024 || this.target.y<0 || this.target.y>1024) {
+                targetremake();
+                sizing.restart();
+                this.gravity = 0.5;
+            }
+        }
     }
 
 }
